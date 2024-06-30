@@ -9,7 +9,7 @@ set(OPENMW_RESOURCES
 )
 
 if (ANDROID)
-    set(OPENMW_SOURCES ${OPENMW_SOURCES} android_main.cpp)
+    set(OPENMW_SOURCES ${OPENMW_SOURCES} main.cpp android_main.cpp)    
 endif()
 
 set(OPENMW_HEADERS
@@ -18,6 +18,12 @@ set(OPENMW_HEADERS
     options.hpp
     profile.hpp
 )
+
+if(NOT ANDROID)
+    set(TARGET_OS openmw-lib)
+else()
+    set(TARGET_OS openmw)
+endif()
 
 source_group(apps/openmw FILES main.cpp ${OPENMW_SOURCES} ${OPENMW_HEADERS} ${OPENMW_RESOURCES})
 
@@ -136,7 +142,7 @@ endif ()
 
 if(BUILD_OPENMW)
     if (ANDROID)
-        add_library(openmw-lib SHARED
+        add_library(openmw SHARED
             ${OPENMW_FILES}
             ${OPENMW_SOURCES}
         )
@@ -157,7 +163,7 @@ include_directories(
     ${FFmpeg_INCLUDE_DIRS}
 )
 
-target_link_libraries(openmw-lib
+target_link_libraries(${TARGET_OS}
     # CMake's built-in OSG finder does not use pkgconfig, so we have to
     # manually ensure the order is correct for inter-library dependencies.
     # This only makes a difference with `-DOPENMW_USE_SYSTEM_OSG=ON -DOSG_STATIC=ON`.
@@ -209,7 +215,7 @@ endif()
 add_definitions(-DMYGUI_DONT_USE_OBSOLETE=ON)
 
 if (ANDROID)
-    target_link_libraries(openmw-lib EGL android log z)
+    target_link_libraries(openmw EGL android log z)
 endif (ANDROID)
 
 if (USE_SYSTEM_TINYXML)
@@ -222,7 +228,7 @@ endif()
 
 # Fix for not visible pthreads functions for linker with glibc 2.15
 if (UNIX AND NOT APPLE)
-    target_link_libraries(openmw-lib ${CMAKE_THREAD_LIBS_INIT})
+    target_link_libraries(${TARGET_OS} ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 if(APPLE AND BUILD_OPENMW)
