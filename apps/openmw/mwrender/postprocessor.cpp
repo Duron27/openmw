@@ -1,6 +1,7 @@
 #include "postprocessor.hpp"
 
 #include <SDL_opengl_glext.h>
+#include <dlfcn.h>
 #include <algorithm>
 #include <chrono>
 #include <thread>
@@ -301,7 +302,22 @@ namespace MWRender
         mCanvases[frameId]->setCalculateAvgLum(mHDR);
 
         mCanvases[frameId]->setTextureScene(getTexture(Tex_Scene, frameId));
-        mCanvases[frameId]->setTextureDepth(getTexture(Tex_OpaqueDepth, frameId));
+
+        int main() {
+            void* handle = dlopen("libGL.so", RTLD_LAZY);
+            if (!handle) {
+                // gl4es is not available
+                mCanvases[frameId]->setTextureDepth(getTexture(Tex_OpaqueDepth, frameId));
+                std::cout << "gl4es is not available on this system." << std::endl;
+            } else {
+                // gl4es is available
+                mCanvases[frameId]->setTextureDepth(getTexture(Tex_Depth, frameId));
+                std::cout << "gl4es is available on this system." << std::endl;
+                dlclose(handle);
+            }
+            return 0;
+        }
+        
         mCanvases[frameId]->setTextureDistortion(getTexture(Tex_Distortion, frameId));
 
         mTransparentDepthPostPass->mFbo[frameId] = mFbos[frameId][FBO_Primary];
